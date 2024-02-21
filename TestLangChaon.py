@@ -10,7 +10,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.llms import Ollama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-
+from langchain.chains import create_history_aware_retriever
+from langchain_core.prompts import MessagesPlaceholder
+from langchain_core.messages import HumanMessage, AIMessage
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
@@ -18,7 +20,7 @@ from selenium.webdriver.chrome.service import Service
 import time
 
 # Specify the path to chromedriver.exe
-webdriver_path = 'C:\chromedriver.exe'
+webdriver_path = './chromedriver.exe'
 
 # Set the path using the Service class
 service = Service(webdriver_path)
@@ -31,7 +33,7 @@ url = "https://www.promptior.ai/about"
 driver.get(url)
 
 # Wait for the page to load (adjust the sleep time based on your page's loading time)
-time.sleep(5)
+time.sleep(1)
 
 # Get the page source after waiting for a while to allow dynamic content to load
 page_source = driver.page_source
@@ -63,20 +65,40 @@ text_splitter = RecursiveCharacterTextSplitter()
 docs = [Document(page_content=about_texts)]  # Pass about_texts as page_content
 documents = text_splitter.split_documents(docs)
 vector = Annoy.from_documents(documents, embeddings)
-
-
-# Creation of the retrieval chain
-prompt = ChatPromptTemplate.from_template("""Answer the following question based only on the provided context:
-
-<context>
-{context}
-</context>
-
-Question: {input}""")
-document_chain = create_stuff_documents_chain(llm, prompt)
 retriever = vector.as_retriever()
-retrieval_chain = create_retrieval_chain(retriever, document_chain)
 
-# Use the retrieval chain to ask a question with the Document as context
-response = retrieval_chain.invoke({"input": "what is promptior?", "context": docs})
-print(response["answer"])
+
+# First we need a prompt that we can pass into an LLM to generate this search query
+prompt = ChatPromptTemplate.from_messages([
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("user", "{input}"),
+    ("user", "Given the above conversation, generate a search query to look up in order to get information relevant to the conversation")
+])
+retriever_chain = create_history_aware_retriever(llm, retriever, prompt)
+
+# Create a new chain to continue the conversation with these retrieved documents in mind
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Answer the user's questions based on the below context:\n\n{context}"),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("user", "{input}"),
+])
+document_chain = create_stuff_documents_chain(llm, prompt)
+
+retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
+
+
+chat_history = []
+
+while True:
+    user_input = input("Enter your question: ")
+    if user_input.lower() == "exit":
+        break
+
+    chat_history.append(HumanMessage(content=user_input))
+    response = retrieval_chain.invoke({
+        "chat_history": chat_history,
+        "input": user_input
+    })
+
+    print(response["answer"])
+    chat_history.append(AIMessage(content=response["answer"]))

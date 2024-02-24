@@ -4,7 +4,7 @@ anyio==4.3.0
 async-timeout==4.0.3
 attrs==23.2.0
 beautifulsoup4==4.12.2
-brotli-python==1.0.9
+Brotli==1.0.9
 charset-normalizer==3.3.2
 colorama==0.4.6
 dataclasses-json==0.6.4

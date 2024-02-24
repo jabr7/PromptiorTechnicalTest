@@ -15,16 +15,29 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.service import Service
 import time
 import os
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Set up ChromeDriver
-driver = webdriver.Chrome(ChromeDriverManager().install())
+# Set up Chrome options
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Ensure GUI is off
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
-# Replace 'your_url_here' with the actual URL you want to scrape
-url = "https://www.promptior.ai/about"
+# Set path to chromedriver as per your configuration
+webdriver_path = ChromeDriverManager().install()
 
-# Open the URL
-driver.get(url)
+# Choose Chrome Browser
+driver = webdriver.Chrome(service=Service(webdriver_path), options=chrome_options)
 
 # Wait for the page to load (adjust the sleep time based on your page's loading time)
 time.sleep(1)

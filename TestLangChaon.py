@@ -15,17 +15,10 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.service import Service
 import time
 import os
+from webdriver_manager.chrome import ChromeDriverManager
 
-
-# Specify the path to chromedriver
-webdriver_path = './chromedriver'
-
-# Change the permissions of chromedriver
-os.chmod(webdriver_path, 0o755)
-
-# Set the path using the Service class
-service = Service(webdriver_path)
-driver = webdriver.Chrome(service=service)
+# Set up ChromeDriver
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
 # Replace 'your_url_here' with the actual URL you want to scrape
 url = "https://www.promptior.ai/about"

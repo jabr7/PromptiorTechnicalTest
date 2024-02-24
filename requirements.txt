@@ -32,7 +32,7 @@ pysocks==1.7.1
 pytest==8.0.1
 pytest-subtests==0.11.0
 annoy==1.17.2
-pytorch==1.12.1
+torch==1.12.1
 pyyaml==6.0.1
 requests==2.31.0
 selenium==4.18.1

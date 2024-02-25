@@ -1,3 +1,6 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Annoy 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -10,10 +13,12 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_history_aware_retriever
 from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
-from selenium import webdriver
 from bs4 import BeautifulSoup
+from typing import List
+from fastapi import FastAPI
+from pydantic import BaseModel
 
-#Since it seems i can open a browser in railway i will be harcoding the text for the context window
+#Since it seems i cant open a browser in railway i will be harcoding the text for the context window
 # but the version with the browser was tested and its working
 '''
 from selenium import webdriver
@@ -82,7 +87,6 @@ prompt = ChatPromptTemplate.from_messages([
     ("user", "Given the above conversation, generate a search query to look up in order to get information relevant to the conversation")
 ])
 retriever_chain = create_history_aware_retriever(llm, retriever, prompt)
-print(retriever_chain)
 
 # Create a new chain to continue the conversation with these retrieved documents in mind
 prompt = ChatPromptTemplate.from_messages([
@@ -95,6 +99,49 @@ document_chain = create_stuff_documents_chain(llm, prompt)
 retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
 
 
+
+class ChatHistory(BaseModel):
+    content: str
+
+app = FastAPI()
+
+# Global variable to store chat history
+chat_history_global = []
+
+@app.post("/ask")
+async def ask(question: str):
+    global chat_history_global
+    try:
+        print(f"Received question: {question}")
+
+        # Add the user's question to the chat history
+        chat_history_global.append(question)
+
+        # Use the global chat history instead of the one from the request
+        chat_history = [HumanMessage(content=msg) for msg in chat_history_global]
+
+        response = retrieval_chain.invoke({
+            "chat_history": chat_history,
+            "input": question
+        })
+
+        answer = response["answer"]
+        chat_history.append(AIMessage(content=answer))
+
+        # Update the global chat history
+        chat_history_global = [msg.content for msg in chat_history]
+
+        return {
+            'answer': answer,
+            'chat_history': chat_history_global
+        }
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
+
+
+#For local testing
+'''
 chat_history = []
 
 while True:
@@ -110,3 +157,4 @@ while True:
 
     print(response["answer"])
     chat_history.append(AIMessage(content=response["answer"]))
+    '''

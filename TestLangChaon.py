@@ -16,30 +16,41 @@ from langchain_core.messages import HumanMessage, AIMessage
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
-from selenium.webdriver.chrome.service import Service
-import time
+#Since it seems i can open a browser in railway i will be harcoding the text for the context window
+# but the version with the browser was tested and its working
+'''
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
-# Specify the path to chromedriver.exe
-webdriver_path = './chromedriver.exe'
+# Set up headless Chrome
+options = Options()
+options.headless = True
 
-# Set the path using the Service class
-service = Service(webdriver_path)
-driver = webdriver.Chrome(service=service)
+# Use webdriver_manager to download and install the latest ChromeDriver
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
-# Replace 'your_url_here' with the actual URL you want to scrape
-url = "https://www.promptior.ai/about"
+# Navigate to the page
+driver.get('https://www.promptior.ai/about')
 
-# Open the URL
-driver.get(url)
+# Get the page content
+page_content = driver.page_source
+'''
+page_content = """
+<div class="about-page">
+    <h2 class="section-title">Who are we?</h2>
+    <div class="text-section">
+        <p class="about-text aos-init aos-animate" data-aos="fade-left">Promptior was founded in March 2023 with the mission to democratize and facilitate access to Artificial Intelligence for people and organizations worldwide. The adoption of these technologies drives innovation, improves efficiency, and radically transforms the way people work, learn, and collaborate.</p>
+        <p class="about-text aos-init aos-animate" data-aos="fade-right">The biggest challenge organizations will face in the coming years will be to fully leverage the potential that these technologies offer to their businesses and work teams. This is achieved through process redesign, integration with existing systems, and, above all, daily and collaborative adoption by organization members.</p>
+        <p class="about-text aos-init" data-aos="fade-left">Our team is composed of professionals with extensive experience in technology and artificial intelligence, and we are committed to providing the tools, resources, and knowledge necessary to help our clients rapidly adopt these benefits.</p>
+        <p class="about-text aos-init" data-aos="fade-right">We take pride in our dedication to our client's success and the advancement of AI worldwide. We are committed to building a smarter and more connected future for all.</p>
+    </div>
+</div>
+"""
 
-# Wait for the page to load (adjust the sleep time based on your page's loading time)
-time.sleep(1)
-
-# Get the page source after waiting for a while to allow dynamic content to load
-page_source = driver.page_source
 
 # Parse the HTML content
-soup = BeautifulSoup(page_source, 'html.parser')
+soup = BeautifulSoup(page_content, 'html.parser')
 
 # Extracting text from all paragraphs within the "text-section"
 text_section = soup.find('div', class_='text-section')
@@ -50,8 +61,6 @@ if text_section:
 else:
     print("Text section not found")
 
-# Close the browser
-driver.quit()
 
 
 # Initialization of Ollama with the Llama2 model

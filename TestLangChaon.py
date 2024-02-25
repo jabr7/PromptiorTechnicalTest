@@ -12,41 +12,41 @@ from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 from selenium import webdriver
 from bs4 import BeautifulSoup
-from selenium.webdriver.chrome.service import Service
-import time
-import os
 
+#Since it seems i can open a browser in railway i will be harcoding the text for the context window
+# but the version with the browser was tested and its working
+'''
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Set up Chrome options
-chrome_options = Options()
-chrome_options.add_argument("--headless")  # Ensure GUI is off
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
+# Set up headless Chrome
+options = Options()
+options.headless = True
 
-# Set path to chromedriver as per your configuration
-webdriver_path = ChromeDriverManager().install()
+# Use webdriver_manager to download and install the latest ChromeDriver
+driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
-# Choose Chrome Browser
-driver = webdriver.Chrome(service=Service(webdriver_path), options=chrome_options)
+# Navigate to the page
+driver.get('https://www.promptior.ai/about')
 
-# Wait for the page to load (adjust the sleep time based on your page's loading time)
-time.sleep(1)
-
-# Get the page source after waiting for a while to allow dynamic content to load
-page_source = driver.page_source
+# Get the page content
+page_content = driver.page_source
+'''
+page_content = """
+<div class="about-page">
+    <h2 class="section-title">Who are we?</h2>
+    <div class="text-section">
+        <p class="about-text aos-init aos-animate" data-aos="fade-left">Promptior was founded in March 2023 with the mission to democratize and facilitate access to Artificial Intelligence for people and organizations worldwide. The adoption of these technologies drives innovation, improves efficiency, and radically transforms the way people work, learn, and collaborate.</p>
+        <p class="about-text aos-init aos-animate" data-aos="fade-right">The biggest challenge organizations will face in the coming years will be to fully leverage the potential that these technologies offer to their businesses and work teams. This is achieved through process redesign, integration with existing systems, and, above all, daily and collaborative adoption by organization members.</p>
+        <p class="about-text aos-init" data-aos="fade-left">Our team is composed of professionals with extensive experience in technology and artificial intelligence, and we are committed to providing the tools, resources, and knowledge necessary to help our clients rapidly adopt these benefits.</p>
+        <p class="about-text aos-init" data-aos="fade-right">We take pride in our dedication to our client's success and the advancement of AI worldwide. We are committed to building a smarter and more connected future for all.</p>
+    </div>
+</div>
+"""
 
 # Parse the HTML content
-soup = BeautifulSoup(page_source, 'html.parser')
+soup = BeautifulSoup(page_content, 'html.parser')
 
 # Extracting text from all paragraphs within the "text-section"
 text_section = soup.find('div', class_='text-section')
@@ -56,10 +56,6 @@ if text_section:
     about_texts = ' '.join(p.get_text() for p in about_texts)  # Extract text and join into a single string
 else:
     print("Text section not found")
-
-# Close the browser
-driver.quit()
-
 
 
 # Creation of the embedding model

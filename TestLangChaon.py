@@ -1,7 +1,5 @@
-# Importación de las librerías necesarias
-from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Annoy  # Assuming Annoy is implemented in langchain_community.vectorstores
+from langchain_community.vectorstores import Annoy 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.documents import Document
@@ -9,7 +7,6 @@ from langchain.chains import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.llms import Ollama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import create_history_aware_retriever
 from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
@@ -48,7 +45,6 @@ page_content = """
 </div>
 """
 
-
 # Parse the HTML content
 soup = BeautifulSoup(page_content, 'html.parser')
 
@@ -62,21 +58,23 @@ else:
     print("Text section not found")
 
 
-
-# Initialization of Ollama with the Llama2 model
-llm = Ollama(model="llama2")
-
 # Creation of the embedding model
 embeddings = OllamaEmbeddings()
 
 # Indexing of the data
 text_splitter = RecursiveCharacterTextSplitter()
-docs = [Document(page_content=about_texts)]  # Pass about_texts as page_content
+docs = [Document(page_content=about_texts)]
 documents = text_splitter.split_documents(docs)
+# I had some issues with FAISS for cpu on windows so I used Annoy instead
+# Retriever is created using the Annoy vector store
 vector = Annoy.from_documents(documents, embeddings)
 retriever = vector.as_retriever()
 
 
+
+
+# Initialization of Ollama with the Llama2 model
+llm = Ollama(model="llama2")
 # First we need a prompt that we can pass into an LLM to generate this search query
 prompt = ChatPromptTemplate.from_messages([
     MessagesPlaceholder(variable_name="chat_history"),
@@ -84,6 +82,7 @@ prompt = ChatPromptTemplate.from_messages([
     ("user", "Given the above conversation, generate a search query to look up in order to get information relevant to the conversation")
 ])
 retriever_chain = create_history_aware_retriever(llm, retriever, prompt)
+print(retriever_chain)
 
 # Create a new chain to continue the conversation with these retrieved documents in mind
 prompt = ChatPromptTemplate.from_messages([
